@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Registration Scanner — District Annual Contest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --maroon: #772432; --maroon-dark: #5a1a25; --gold: #c9a961;
+    --bg: #f6f2ec; --bg-card: #ffffff;
+    --ink: #1a1410; --ink-soft: #5a4a40; --ink-mute: #8a7a70;
+    --line: #e0d6c8; --line-soft: #ebe3d6;
+    --green: #1f6b3a; --green-bg: #d8ecdc;
+    --red: #a83232; --red-bg: #f3d8d8;
+    --amber: #a86b1a; --amber-bg: #f4e4c4;
+    --coral: #b8431c; --coral-bg: #f7d9c8;
+  }
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg); color: var(--ink);
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased; overscroll-behavior: none;
+  }
+  .display { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.02em; }
+  .app {
+    max-width: 600px; margin: 0 auto;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; background: var(--bg);
+  }
+  .header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--line); background: var(--bg-card);
+  }
+  .header-eyebrow {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--maroon); margin-bottom: 2px;
+  }
+  .header-title { font-size: 24px; font-weight: 600; }
+
+  .setup {
+    padding: 20px 22px 28px; flex: 1;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .setup-intro { color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 13px; font-weight: 600; }
+  .hint { font-size: 13px; color: var(--ink-mute); line-height: 1.45; }
+  .hint code, code.inline {
+    background: var(--line-soft); padding: 1px 5px; border-radius: 3px;
+    font-size: 12px; font-family: ui-monospace, monospace;
+  }
+  .input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; padding: 11px 12px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg-card); color: var(--ink); width: 100%;
+  }
+  .input:focus {
+    outline: none; border-color: var(--maroon);
+    box-shadow: 0 0 0 3px rgba(119,36,50,0.12);
+  }
+  .button {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 13px 22px; border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .button:active:not(:disabled) { transform: translateY(1px); }
+  .button-primary { background: var(--maroon); color: white; }
+  .button-primary:hover:not(:disabled) { background: var(--maroon-dark); }
+  .button-ghost {
+    background: transparent; color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .button-ghost:hover:not(:disabled) { background: var(--bg-card); }
+  .button-small { padding: 8px 14px; font-size: 13px; }
+
+  details.collapse {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--bg-card); padding: 0;
+  }
+  details.collapse > summary {
+    padding: 13px 16px; cursor: pointer; list-style: none;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 600; color: var(--ink);
+  }
+  details.collapse > summary::-webkit-details-marker { display: none; }
+  details.collapse > summary::after {
+    content: '+'; font-size: 18px; color: var(--ink-mute);
+    font-weight: 400; transition: transform 0.15s;
+  }
+  details.collapse[open] > summary::after { content: '−'; }
+  details.collapse > .collapse-body {
+    padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px;
+    border-top: 1px solid var(--line-soft); padding-top: 14px;
+  }
+
+  .csv-status-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px;
+  }
+  .csv-status-card.loading {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink-soft); font-size: 14px;
+  }
+  .csv-status-card.error {
+    border-color: var(--red); background: var(--red-bg); color: var(--red);
+  }
+  .csv-status-card.error strong { color: var(--red); }
+  .csv-status-card.error .error-message {
+    font-size: 14px; line-height: 1.5; margin-top: 4px;
+  }
+  .csv-status-card.error .error-help {
+    margin-top: 12px; padding: 10px 12px;
+    background: rgba(255,255,255,0.5); border-radius: 6px;
+    font-size: 13px; color: var(--ink); line-height: 1.5;
+  }
+  .csv-status-card.error .error-help code {
+    background: rgba(0,0,0,0.08); padding: 1px 5px;
+    border-radius: 3px; font-size: 12px;
+  }
+  .csv-status-card.success {
+    border-color: var(--line);
+  }
+  .csv-success-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 12px;
+  }
+  .csv-success-title {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+    border-top: 1px solid var(--line-soft);
+    margin-top: 4px; padding-top: 14px;
+  }
+  .summary-cell { text-align: center; border-right: 1px solid var(--line-soft); }
+  .summary-cell:last-child { border-right: none; }
+  .summary-num {
+    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .summary-cell.paid .summary-num { color: var(--green); }
+  .summary-cell.pending .summary-num { color: var(--coral); }
+  .summary-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); margin-top: 4px;
+  }
+
+  .file-picker-row {
+    display: flex; gap: 8px; align-items: center; margin-top: 8px;
+  }
+  .file-picker-row input[type="file"] { display: none; }
+  .file-picker-label {
+    flex: 1; font-size: 13px; color: var(--ink-mute);
+  }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .scanner-wrap { flex: 1; display: flex; flex-direction: column; }
+  .stats-bar {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    background: var(--bg-card); border-bottom: 1px solid var(--line);
+  }
+  .stat { padding: 10px 12px; text-align: center; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); margin-top: 4px;
+  }
+  .stat.checked .stat-num { color: var(--green); }
+  .stat.pending .stat-num { color: var(--coral); }
+
+  .sync-bar {
+    padding: 7px 16px; font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-card); color: var(--ink-soft);
+  }
+  .sync-bar.synced { background: var(--green-bg); color: var(--green); }
+  .sync-bar.syncing { background: var(--bg-card); color: var(--ink-soft); }
+  .sync-bar.error { background: var(--red-bg); color: var(--red); }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+  }
+  .sync-bar.syncing .sync-dot { animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  #qr-reader {
+    background: #000; width: 100%;
+    max-height: 50vh; overflow: hidden; position: relative;
+  }
+  #qr-reader video { width: 100% !important; height: auto !important; display: block; }
+  #qr-reader__dashboard_section_csr,
+  #qr-reader__dashboard_section_swaplink,
+  #qr-reader__status_span,
+  #qr-reader__header_message,
+  #qr-reader__filescan_input { display: none !important; }
+  #qr-reader__scan_region img { display: none !important; }
+
+  .result {
+    padding: 18px 22px; min-height: 96px;
+    display: flex; align-items: center; gap: 14px;
+    transition: background 0.2s; border-bottom: 1px solid var(--line);
+  }
+  .result.idle { background: var(--bg-card); color: var(--ink-mute); }
+  .result.valid { background: var(--green-bg); color: var(--green); }
+  .result.invalid { background: var(--red-bg); color: var(--red); }
+  .result.duplicate { background: var(--amber-bg); color: var(--amber); }
+  .result.unpaid { background: var(--coral-bg); color: var(--coral); }
+  .result-icon {
+    font-size: 32px; line-height: 1; flex-shrink: 0;
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 2px solid currentColor; font-weight: bold;
+  }
+  .result-body { flex: 1; min-width: 0; }
+  .result-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .result-detail {
+    font-size: 13px; margin-top: 3px; opacity: 0.85; word-break: break-word;
+  }
+
+  .log {
+    flex: 1; overflow-y: auto;
+    padding: 10px 22px 22px; background: var(--bg-card);
+    min-height: 100px;
+  }
+  .log-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0 6px;
+  }
+  .log-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-mute);
+  }
+  .log-empty {
+    color: var(--ink-mute); font-size: 13px;
+    padding: 16px 0; text-align: center;
+  }
+  .log-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .log-status.valid { background: var(--green); }
+  .log-status.invalid { background: var(--red); }
+  .log-status.duplicate { background: var(--amber); }
+  .log-status.unpaid { background: var(--coral); }
+  .log-name {
+    font-size: 14px; font-weight: 500; flex: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .log-sync {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    font-weight: 500; flex-shrink: 0;
+  }
+  .log-sync.pending { background: var(--line-soft); color: var(--ink-mute); }
+  .log-sync.saved { background: var(--green-bg); color: var(--green); }
+  .log-sync.failed { background: var(--red-bg); color: var(--red); }
+  .log-time { font-size: 12px; color: var(--ink-mute); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  .footer-actions {
+    padding: 12px 22px 18px; display: flex; gap: 8px; flex-wrap: wrap;
+    background: var(--bg-card); border-top: 1px solid var(--line);
+  }
+  .footer-actions .button { flex: 1; padding: 10px 12px; font-size: 13px; min-width: 0; }
+
+  .error-card {
+    padding: 18px; background: var(--red-bg); border: 1px solid var(--red);
+    color: var(--red); border-radius: 8px; margin: 22px;
+    font-size: 14px; line-height: 1.5;
+  }
+
+  .hidden { display: none !important; }
+
+  @keyframes flash-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result { animation: flash-in 0.18s ease-out; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-eyebrow">District Annual Contest</div>
+    <div class="header-title display">Registration Scanner</div>
+  </header>
+
+  <section class="setup" id="setup-view">
+    <p class="setup-intro">
+      Reads <code class="inline">registrations.csv</code> from this folder. Only paid registrants can be checked in.
+    </p>
+
+    <div id="csv-status" class="csv-status-card loading">
+      <span class="spinner"></span>
+      <span>Loading registrations.csv…</span>
+    </div>
+
+    <div class="file-picker-row hidden" id="picker-row">
+      <span class="file-picker-label">Or load a different CSV:</span>
+      <label class="button button-ghost button-small" for="csv-file-picker">Choose file</label>
+      <input type="file" id="csv-file-picker" accept=".csv,text/csv">
+    </div>
+
+    <details class="collapse" id="logging-section">
+      <summary>Save check-ins to spreadsheet (optional)</summary>
+      <div class="collapse-body">
+        <p class="hint">
+          Each successful check-in gets logged to a <code class="inline">CheckIns</code> tab via Apps Script. Paste the Web app URL ending in <code class="inline">/exec</code>.
+        </p>
+        <div class="field">
+          <label class="label" for="webapp-url">Web app URL</label>
+          <input id="webapp-url" class="input" type="url"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="label" for="desk-name">Desk name (optional)</label>
+          <input id="desk-name" class="input" type="text" placeholder="e.g. Front Desk, Door 2">
+        </div>
+      </div>
+    </details>
+
+    <button class="button button-primary" id="start-btn" disabled>Start scanning →</button>
+
+    <p class="hint" style="margin-top:4px;">
+      Page must be served over HTTPS (or <code class="inline">localhost</code>) for the camera to work.
+    </p>
+  </section>
+
+  <section class="scanner-wrap hidden" id="scanner-view">
+    <div class="stats-bar">
+      <div class="stat checked">
+        <div class="stat-num" id="stat-checked">0</div>
+        <div class="stat-label">Checked in</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-paid">0</div>
+        <div class="stat-label">Paid</div>
+      </div>
+      <div class="stat pending">
+        <div class="stat-num" id="stat-pending">0</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    <div class="sync-bar hidden" id="sync-bar">
+      <span class="sync-dot"></span>
+      <span id="sync-text">Logging to spreadsheet</span>
+    </div>
+
+    <div id="qr-reader"></div>
+
+    <div class="result idle" id="result">
+      <div class="result-icon">·</div>
+      <div class="result-body">
+        <div class="result-title">Ready to scan</div>
+        <div class="result-detail">Point camera at registrant's QR code</div>
+      </div>
+    </div>
+
+    <div class="log" id="log">
+      <div class="log-header">
+        <div class="log-title">Recent activity</div>
+      </div>
+      <div class="log-empty" id="log-empty">No scans yet</div>
+      <div id="log-list"></div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="button button-ghost" id="refresh-btn">↻ Reload CSV</button>
+      <button class="button button-ghost" id="export-btn">Export log</button>
+      <button class="button button-ghost" id="back-btn">Setup</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const CSV_PATH = 'registrations.csv';
+const LS_KEY = 'tm_scanner_setup_v2';
+
+const state = {
+  codes: new Map(),         // normalized code -> { displayCode, name, isPaid, paymentStatus, checkedIn, checkedInAt }
+  log: [],
+  scanner: null,
+  lastScanRaw: null,
+  lastScanTime: 0,
+  webAppUrl: '',
+  deskName: '',
+  syncStats: { saved: 0, failed: 0, pending: 0 },
+  retryTimer: null,
+};
+
+// ----- Audio + haptics -----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function beep(freq, duration = 0.08, delay = 0) {
+  try {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t0 = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value = freq; osc.type = 'sine';
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.2, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.start(t0); osc.stop(t0 + duration + 0.02);
+  } catch (e) {}
+}
+function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
+
+// ----- Helpers -----
+function normalize(s) { return String(s || '').trim().toUpperCase(); }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function fmtTime(d) {
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+}
+
+// ----- Persistence -----
+function saveSetup() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      webAppUrl: document.getElementById('webapp-url').value,
+      deskName: document.getElementById('desk-name').value,
+    }));
+  } catch (e) {}
+}
+function loadSetup() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const v = JSON.parse(raw);
+    if (v.webAppUrl) document.getElementById('webapp-url').value = v.webAppUrl;
+    if (v.deskName) document.getElementById('desk-name').value = v.deskName;
+  } catch (e) {}
+}
+
+// ----- CSV parsing -----
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cur = '', inQuotes = false, i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"' && text[i+1] === '"') { cur += '"'; i += 2; continue; }
+      if (ch === '"') { inQuotes = false; i++; continue; }
+      cur += ch; i++;
+    } else {
+      if (ch === '"') { inQuotes = true; i++; continue; }
+      if (ch === ',') { row.push(cur); cur = ''; i++; continue; }
+      if (ch === '\r') { i++; continue; }
+      if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; i++; continue; }
+      cur += ch; i++;
+    }
+  }
+  if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+  while (rows.length && rows[rows.length-1].every(c => c === '')) rows.pop();
+  return rows;
+}
+
+// ----- Build code map from CSV (auto-detects columns) -----
+function buildCodesFromCSV(rows, existing) {
+  if (rows.length < 2) {
+    throw new Error('CSV has no data rows.');
+  }
+  const headers = rows[0].map(h => (h || '').trim());
+  const lower = headers.map(h => h.toLowerCase());
+
+  const codeCol = lower.findIndex(h =>
+    /^registration\s*id$|^reg\s*id$|^id$|^code$|registration|reg.?code|member.?id|ticket|qr/.test(h));
+  const fullNameCol = lower.findIndex(h => /^name$|^full.?name$|^member.?name$|^attendee.?name$/.test(h));
+  const firstNameCol = lower.findIndex(h => /^first.?name$|^fname$|^given.?name$/.test(h));
+  const lastNameCol = lower.findIndex(h => /^last.?name$|^lname$|^surname$|^family.?name$/.test(h));
+  const paidCol = lower.findIndex(h =>
+    /^payment.?status$|^paid.?status$|^paid$|^status$|^payment$/.test(h));
+
+  if (codeCol === -1) {
+    throw new Error(`Couldn't find a Registration ID column. Expected a header like "Registration ID". Found: ${headers.join(', ')}`);
+  }
+  if (paidCol === -1) {
+    throw new Error(`Couldn't find a Payment Status column. Expected a header like "Payment Status". Found: ${headers.join(', ')}`);
+  }
+
+  const map = new Map();
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const code = (row[codeCol] || '').trim();
+    if (!code) continue;
+
+    let name = '';
+    if (fullNameCol >= 0) {
+      name = (row[fullNameCol] || '').trim();
+    } else {
+      const fn = firstNameCol >= 0 ? (row[firstNameCol] || '').trim() : '';
+      const ln = lastNameCol >= 0 ? (row[lastNameCol] || '').trim() : '';
+      name = [fn, ln].filter(Boolean).join(' ');
+    }
+
+    const rawStatus = (row[paidCol] || '').trim();
+    const lowerStatus = rawStatus.toLowerCase();
+    const isPaid = lowerStatus === 'paid' || lowerStatus === 'yes' || lowerStatus === 'y' || lowerStatus === 'true' || lowerStatus === '1';
+
+    const norm = normalize(code);
+    if (map.has(norm)) continue;
+
+    const prev = existing && existing.get(norm);
+    map.set(norm, {
+      displayCode: code,
+      name,
+      isPaid,
+      paymentStatus: rawStatus,
+      checkedIn: prev ? prev.checkedIn : false,
+      checkedInAt: prev ? prev.checkedInAt : null,
+    });
+  }
+  return map;
+}
+
+// ----- CSV loading (auto + manual) -----
+async function loadCsvFromUrl() {
+  // Cache-bust to ensure fresh data on reload
+  const url = CSV_PATH + '?_=' + Date.now();
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    if (res.status === 404) throw new Error(`File not found: ${CSV_PATH}. Make sure it's in the same folder as this page.`);
+    throw new Error(`HTTP ${res.status} loading ${CSV_PATH}`);
+  }
+  const text = await res.text();
+  if (/<html/i.test(text.slice(0, 200))) {
+    throw new Error('Got HTML instead of CSV. Check that registrations.csv exists in this folder.');
+  }
+  return parseCSV(text);
+}
+
+function loadCsvFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { resolve(parseCSV(reader.result)); } catch (e) { reject(e); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}
+
+function showCsvLoading() {
+  const el = document.getElementById('csv-status');
+  el.className = 'csv-status-card loading';
+  el.innerHTML = '<span class="spinner"></span><span>Loading registrations.csv…</span>';
+}
+
+function showCsvError(err, isFileProtocol) {
+  const el = document.getElementById('csv-status');
+  el.className = 'csv-status-card error';
+  let helpHtml = '';
+  if (isFileProtocol) {
+    helpHtml = `
+      <div class="error-help">
+        <strong>How to fix:</strong> Browsers block reading local files when you open the page directly. Run a tiny web server in this folder:
+        <br><br>
+        <code>python3 -m http.server 8000</code>
+        <br><br>
+        Then visit <code>http://localhost:8000</code>. Or deploy the folder to Netlify Drop / GitHub Pages.
+      </div>`;
+  }
+  el.innerHTML = `
+    <strong>Couldn't load registrations.csv</strong>
+    <div class="error-message">${escapeHtml(err.message || String(err))}</div>
+    ${helpHtml}`;
+  document.getElementById('picker-row').classList.remove('hidden');
+  document.getElementById('start-btn').disabled = true;
+}
+
+function showCsvSuccess(map, sourceLabel) {
+  let paid = 0, pending = 0;
+  for (const v of map.values()) (v.isPaid ? paid++ : pending++);
+  const total = map.size;
+
+  const el = document.getElementById('csv-status');
+  el.className = 'csv-status-card success';
+  el.innerHTML = `
+    <div class="csv-success-row">
+      <div>
+        <div class="csv-success-title">Registrations loaded</div>
+        <div class="hint" style="margin-top:2px;">${escapeHtml(sourceLabel)}</div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-cell"><div class="summary-num">${total}</div><div class="summary-label">Total</div></div>
+      <div class="summary-cell paid"><div class="summary-num">${paid}</div><div class="summary-label">Paid</div></div>
+      <div class="summary-cell pending"><div class="summary-num">${pending}</div><div class="summary-label">Pending</div></div>
+    </div>`;
+  document.getElementById('picker-row').classList.remove('hidden');
+  document.getElementById('start-btn').disabled = false;
+}
+
+async function autoLoadCsv() {
+  showCsvLoading();
+  const isFileProtocol = location.protocol === 'file:';
+  if (isFileProtocol) {
+    showCsvError(new Error('This page is opened directly from disk. Browsers block local file access for security.'), true);
+    return;
+  }
+  try {
+    const rows = await loadCsvFromUrl();
+    const map = buildCodesFromCSV(rows);
+    state.codes = map;
+    showCsvSuccess(map, `From ${CSV_PATH}`);
+  } catch (err) {
+    showCsvError(err, false);
+  }
+}
+
+// ----- URL extraction (for QRs that contain URLs) -----
+function tryUrlExtract(s) {
+  try {
+    const url = new URL(s);
+    for (const key of ['code','id','reg','ticket','t','c','q']) {
+      const v = url.searchParams.get(key);
+      if (v) return v;
+    }
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  } catch (e) {}
+  return null;
+}
+
+function lookupCode(scanned) {
+  const direct = state.codes.get(normalize(scanned));
+  if (direct) return direct;
+  const extracted = tryUrlExtract(scanned);
+  if (extracted) {
+    const e = state.codes.get(normalize(extracted));
+    if (e) return e;
+  }
+  return null;
+}
+
+// ----- Stats -----
+function updateStats() {
+  let checked = 0, paid = 0, pending = 0;
+  for (const v of state.codes.values()) {
+    if (v.isPaid) paid++; else pending++;
+    if (v.checkedIn) checked++;
+  }
+  document.getElementById('stat-checked').textContent = checked;
+  document.getElementById('stat-paid').textContent = paid;
+  document.getElementById('stat-pending').textContent = pending;
+}
+
+// ----- Result panel -----
+function setResult(status, title, detail) {
+  const el = document.getElementById('result');
+  el.className = 'result ' + status;
+  const icons = { valid: '✓', invalid: '✕', duplicate: '!', unpaid: '$', idle: '·' };
+  el.innerHTML = `
+    <div class="result-icon">${icons[status] || '·'}</div>
+    <div class="result-body">
+      <div class="result-title">${escapeHtml(title)}</div>
+      <div class="result-detail">${escapeHtml(detail)}</div>
+    </div>`;
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = '';
+}
+
+// ----- Activity log -----
+function addLogEntry(entry) { state.log.unshift(entry); renderLog(); }
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const empty = document.getElementById('log-empty');
+  if (state.log.length === 0) {
+    empty.style.display = 'block'; list.innerHTML = ''; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = state.log.slice(0, 50).map(e => {
+    let syncBadge = '';
+    if (e.status === 'valid' && state.webAppUrl) {
+      const cls = e.sync || 'pending';
+      const label = { saved: 'saved', pending: 'saving…', failed: 'retry' }[cls] || '';
+      syncBadge = `<span class="log-sync ${cls}">${label}</span>`;
+    }
+    return `
+    <div class="log-item">
+      <div class="log-status ${e.status}"></div>
+      <div class="log-name">${escapeHtml(e.name || e.code)}</div>
+      ${syncBadge}
+      <div class="log-time">${fmtTime(new Date(e.time))}</div>
+    </div>`;
+  }).join('');
+}
+
+// ----- Sheet logging -----
+function updateSyncBar() {
+  const bar = document.getElementById('sync-bar');
+  if (!state.webAppUrl) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  const { saved, failed, pending } = state.syncStats;
+  let cls = 'synced', text = `✓ ${saved} saved to spreadsheet`;
+  if (pending > 0) { cls = 'syncing'; text = `Saving ${pending}…`; }
+  else if (failed > 0) { cls = 'error'; text = `${failed} failed — retrying`; }
+  else if (saved === 0) { cls = 'syncing'; text = 'Logging to spreadsheet'; }
+  bar.className = 'sync-bar ' + cls;
+  document.getElementById('sync-text').textContent = text;
+}
+
+async function logToSheet(logEntry) {
+  if (!state.webAppUrl) return;
+  state.syncStats.pending++;
+  updateSyncBar();
+  try {
+    const res = await fetch(state.webAppUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        code: logEntry.code,
+        name: logEntry.name || '',
+        desk: state.deskName || '',
+      }),
+      redirect: 'follow',
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Server error');
+    state.syncStats.pending--;
+    state.syncStats.saved++;
+    logEntry.sync = 'saved';
+    renderLog();
+    updateSyncBar();
+  } catch (err) {
+    console.warn('Sync failed:', err);
+    state.syncStats.pending--;
+    state.syncStats.failed++;
+    logEntry.sync = 'failed';
+    renderLog();
+    updateSyncBar();
+  }
+}
+
+function startRetryLoop() {
+  if (state.retryTimer) clearInterval(state.retryTimer);
+  state.retryTimer = setInterval(() => {
+    if (!state.webAppUrl) return;
+    if (state.syncStats.failed === 0) return;
+    const failed = state.log.filter(e => e.sync === 'failed');
+    if (failed.length === 0) return;
+    state.syncStats.failed = 0;
+    failed.forEach(e => {
+      e.sync = 'pending';
+      logToSheet(e);
+    });
+    renderLog();
+    updateSyncBar();
+  }, 30000);
+}
+
+// ----- Scan handler -----
+function handleScan(decoded) {
+  const now = Date.now();
+  if (state.lastScanRaw === decoded && (now - state.lastScanTime) < 2500) return;
+  state.lastScanRaw = decoded;
+  state.lastScanTime = now;
+
+  const entry = lookupCode(decoded);
+
+  // Not in CSV
+  if (!entry) {
+    setResult('invalid', 'Not recognized', `Scanned: ${decoded}`);
+    beep(220, 0.18); beep(180, 0.18, 0.18);
+    vibrate([100, 60, 100]);
+    addLogEntry({ code: decoded, name: '', status: 'invalid', time: now });
+    return;
+  }
+
+  // In CSV but not paid
+  if (!entry.isPaid) {
+    const status = entry.paymentStatus || 'Pending';
+    setResult('unpaid', 'Payment pending',
+      `${entry.name || entry.displayCode} — collect payment before check-in (status: ${status})`);
+    beep(660, 0.12); beep(440, 0.18, 0.14);
+    vibrate([150, 80, 150, 80, 150]);
+    addLogEntry({ code: entry.displayCode, name: entry.name, status: 'unpaid', time: now });
+    return;
+  }
+
+  // Paid + already checked in
+  if (entry.checkedIn) {
+    const when = new Date(entry.checkedInAt);
+    setResult('duplicate', 'Already checked in',
+      `${entry.name || entry.displayCode} — first scan ${fmtTime(when)}`);
+    beep(440, 0.1); beep(440, 0.1, 0.12);
+    vibrate([60, 40, 60]);
+    addLogEntry({ code: entry.displayCode, name: entry.name, status: 'duplicate', time: now });
+    return;
+  }
+
+  // Paid + new check-in
+  entry.checkedIn = true;
+  entry.checkedInAt = now;
+  setResult('valid', `Welcome, ${entry.name || 'registrant'}!`, `Code: ${entry.displayCode}`);
+  beep(880, 0.08); beep(1320, 0.1, 0.08);
+  vibrate(60);
+  const logEntry = {
+    code: entry.displayCode, name: entry.name, status: 'valid',
+    time: now, sync: state.webAppUrl ? 'pending' : null
+  };
+  addLogEntry(logEntry);
+  updateStats();
+  if (state.webAppUrl) logToSheet(logEntry);
+}
+
+// ----- Camera -----
+async function startScanner() {
+  const reader = new Html5Qrcode('qr-reader');
+  state.scanner = reader;
+  const config = {
+    fps: 10,
+    qrbox: (vw, vh) => {
+      const m = Math.min(vw, vh);
+      const size = Math.floor(m * 0.7);
+      return { width: size, height: size };
+    },
+    aspectRatio: 1.333,
+    disableFlip: false,
+  };
+  try {
+    await reader.start({ facingMode: 'environment' }, config,
+      (decoded) => handleScan(decoded), () => {});
+  } catch (err) {
+    try {
+      await reader.start(true, config,
+        (decoded) => handleScan(decoded), () => {});
+    } catch (err2) { showCameraError(err2); }
+  }
+}
+
+function showCameraError(err) {
+  const view = document.getElementById('scanner-view');
+  view.innerHTML = `
+    <div class="error-card">
+      <strong>Camera unavailable.</strong><br>
+      ${escapeHtml(err.message || String(err))}<br><br>
+      Check that you've allowed camera access for this page, and that the page is served over HTTPS (or opened from localhost).
+    </div>
+    <div style="padding: 0 22px 22px;">
+      <button class="button button-ghost" id="back-from-error" style="width:100%;">Back to setup</button>
+    </div>`;
+  document.getElementById('back-from-error').addEventListener('click', () => location.reload());
+}
+
+async function stopScanner() {
+  if (state.scanner) {
+    try { await state.scanner.stop(); } catch (e) {}
+    try { state.scanner.clear(); } catch (e) {}
+    state.scanner = null;
+  }
+}
+
+// ----- Wire up UI -----
+document.getElementById('csv-file-picker').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  showCsvLoading();
+  try {
+    const rows = await loadCsvFromFile(file);
+    const map = buildCodesFromCSV(rows);
+    state.codes = map;
+    showCsvSuccess(map, `From file: ${file.name}`);
+  } catch (err) {
+    showCsvError(err, false);
+  }
+});
+
+document.getElementById('start-btn').addEventListener('click', async () => {
+  if (state.codes.size === 0) { alert('Please load registrations first.'); return; }
+  state.webAppUrl = document.getElementById('webapp-url').value.trim();
+  state.deskName = document.getElementById('desk-name').value.trim();
+  state.syncStats = { saved: 0, failed: 0, pending: 0 };
+  saveSetup();
+
+  updateStats();
+  updateSyncBar();
+  document.getElementById('setup-view').classList.add('hidden');
+  document.getElementById('scanner-view').classList.remove('hidden');
+  try { if (!audioCtx) audioCtx = new AudioCtx(); } catch (e) {}
+  if (state.webAppUrl) startRetryLoop();
+  await startScanner();
+});
+
+document.getElementById('refresh-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('refresh-btn');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Reloading…';
+  try {
+    const rows = await loadCsvFromUrl();
+    const newMap = buildCodesFromCSV(rows, state.codes);
+    state.codes = newMap;
+    updateStats();
+    let paid = 0, pending = 0;
+    for (const v of newMap.values()) (v.isPaid ? paid++ : pending++);
+    setResult('idle', 'CSV reloaded', `${newMap.size} registrants · ${paid} paid · ${pending} pending`);
+    beep(660, 0.06);
+  } catch (err) {
+    setResult('invalid', 'Reload failed', err.message || String(err));
+    beep(220, 0.15);
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+});
+
+document.getElementById('back-btn').addEventListener('click', async () => {
+  if (state.log.length > 0 &&
+      !confirm('Going back will pause scanning. Your check-in log will be kept. Continue?')) return;
+  await stopScanner();
+  document.getElementById('scanner-view').classList.add('hidden');
+  document.getElementById('setup-view').classList.remove('hidden');
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (state.log.length === 0) { alert('No scans to export yet.'); return; }
+  const headers = ['Time', 'Status', 'Code', 'Name', 'Saved to sheet'];
+  const rows = state.log.slice().reverse().map(e => [
+    new Date(e.time).toISOString(), e.status, e.code, e.name || '',
+    e.sync === 'saved' ? 'yes' : (e.sync === 'failed' ? 'failed' : (e.sync === 'pending' ? 'pending' : ''))
+  ]);
+  const csv = [headers, ...rows].map(r =>
+    r.map(c => {
+      const s = String(c ?? '');
+      return /[,"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    }).join(',')
+  ).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `checkin-log-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// ----- Boot -----
+loadSetup();
+autoLoadCsv();
+</script>
+</body>
+</html>
